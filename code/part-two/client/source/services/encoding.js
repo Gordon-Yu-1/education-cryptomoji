@@ -13,9 +13,27 @@
  *   deterministically! JSON is convenient, but you will need to sort
  *   your object's keys or random transactions may fail.
  */
+
+ // Maps over an array with a provided iterator function, concatenating resulting arrays
+const concatMap = (array, iterator) => {
+  return array.reduce((mapped, item) => {
+    return mapped.concat(iterator(item));
+  }, []);
+}
+
+// Recursively fetches all of the keys in nested objects
+const listKeys = object => {
+  if (!object || typeof object !== 'object') return [];
+  if (Array.isArray(object)) return concatMap(object, item => listKeys(item));
+  const topKeys = Object.keys(object);
+  const nestedKeys = concatMap(topKeys, key => listKeys(object[key]));
+  return topKeys.concat(nestedKeys);
+};
+
 export const encode = object => {
   // Enter your solution here
-
+  const sortedKeys = listKeys(object).sort();
+  return Buffer.from(JSON.stringify(object, sortedKeys));
 };
 
 /**
@@ -29,5 +47,5 @@ export const encode = object => {
  */
 export const decode = base64Str => {
   // Your code here
-
+  return JSON.parse(Buffer.from(base64Str, 'base64').toString());
 };
